@@ -52,9 +52,9 @@ check_dir() {
         mkdir -p "${INSTALL_DIR}"
         [ "$?" != "0" ] && return 1
     fi
-
-    return 0
     echo "check_dir end"
+    return 0
+    
 }
 
 clean_up() {
@@ -121,12 +121,13 @@ start_monitor() {
 
     chmod u+x "${MONITOR_FILE}"
     /bin/sh "${MONITOR_FILE}" 1>/dev/null 2>&1 &
-    return 0
     echo "start_monitor end"
+    return 0   
 }
 
 # Return: 0 means running.
 check_running() {
+    echo "check_running start"
     local PID_FILE="/var/run/uuplugin.pid"
     local PLUGIN_EXE="uuplugin"
     local TIMES="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25"
@@ -149,75 +150,15 @@ check_running() {
             sleep 1
         fi
     done
-
+    echo "check_running end"
     return 1
-}
-
-# Return: 0 means it is merlin.
-check_merlin() {
-    # Check to see if it is merlin
-    local br0=$(ip -4 a s br0 | grep inet | grep -v 'grep' | \
-        sed 's/^[ \t]*//g;s/[ \t]*$//g' | sed 's/[ ][ ]*/#/g' | cut -d'#' -f2 | cut -d/ -f1)
-    [ -z "${br0}" ] && return 1
-
-    local code=$(curl -s -o /dev/null -w "%{http_code}" "http://${br0}/images/merlin-logo.png")
-    [ "$code" = "200" ] && return 0
-
-    code=$(wget -Sq -O - "http://${br0}/images/merlin-logo.png" 2>&1 | grep 'HTTP' | \
-        sed 's/^[ \t]*//g;s/[ \t]*$//g' | sed 's/[ ][ ]*/#/g' | cut -d'#' -f2)
-    [ "$code" = "200" ] && return 0
-    return 1
-}
-
-config_asuswrt_bootup() {
-    check_merlin
-    if [ "$?" = "0" ];then
-        config_services_start
-        return $?
-    else
-        config_exec_start
-        return $?
-    fi
+    
 }
 
 # Return: 0 means success.
-config_exec_start() {
-    local bootup_script="${INSTALL_DIR}/uuplugin_bootup.sh"
-    {
-        echo "#!/bin/sh"
-        echo "nohup /bin/sh ${MONITOR_FILE} &"
-    } > ${bootup_script}
-
-    chmod u+x ${bootup_script}
-    nvram set jffs2_exec="${bootup_script}"
-    nvram commit &
-    return 0
-}
 
 # Return: 0 means success.
 # Config ${MONITOR_FILE} starts on boot.
-config_services_start() {
-    local SERVICES_START_FILE="/jffs/scripts/services-start"
-    if [ ! -e "${SERVICES_START_FILE}" ];then
-        mkdir -p /jffs/scripts
-        [ "$?" != "0" ] && return 1
-
-        touch "${SERVICES_START_FILE}"
-        [ "$?" != "0" ] && return 1
-
-        { echo "#!/bin/sh"; echo ""; echo ""; } >> "${SERVICES_START_FILE}"
-        [ "$?" != "0" ] && return 1
-    fi
-
-    chmod u+x "${SERVICES_START_FILE}"
-    grep "${MONITOR_FILE}" "${SERVICES_START_FILE}" 1>/dev/null 2>&1
-    if [ "$?" != "0" ];then
-        echo "/bin/sh ${MONITOR_FILE} &" >> "${SERVICES_START_FILE}"
-        [ "$?" != "0" ] && return 1
-    fi
-
-    return 0
-}
 
 # Return: 0 means success.
 config_xiaomi_bootup() {
@@ -265,17 +206,19 @@ config_bootup_implemention() {
 
 # Return: 0 means success.
 config_bootup() {
+    echo "config_bootup start"
     local router="${ROUTER}"
     config_xiaomi_bootup
-    return $?
+    echo "config_bootup end"
+    return $?    
 }
 
 # Return: 0 means success.
 config_router() {
     echo "config_router start"
     local router="${ROUTER}"
-    return 0
     echo "config_router end"
+    return 0
 }
 
 print_sn() {
@@ -286,8 +229,8 @@ print_sn() {
     local info=$(ip addr show ${interface})
     local mac=$(echo "${info}" | grep "link/ether" | awk '{print $2}')
     echo "sn=${mac}"
-    return 0
     echo "print_sn end"
+    return 0
 }
 
 install() {
