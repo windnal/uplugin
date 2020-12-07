@@ -34,7 +34,7 @@ init_param() {
     MONITOR_DOWNLOAD_URL="${URL_PREFIX}${MONITOR_DOWNLOAD_URL}${XIAOMI}"
     echo "Hello World2 !"
     return 0
-    esac
+    
 }
 
 # Return: 0 means success.
